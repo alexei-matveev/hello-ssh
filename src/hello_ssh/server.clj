@@ -1,10 +1,15 @@
+;;
+;; See blog entry [1] and the Java example [2].
+;;
+;; [1] https://keathmilligan.net/embedding-apache-mina-sshd
+;; [2] https://github.com/keathmilligan/sshdtest
+;;
 (ns hello-ssh.server
   (:import (org.apache.sshd.server SshServer)
            (org.apache.sshd.server.keyprovider SimpleGeneratorHostKeyProvider)
            (org.apache.sshd.server.shell ProcessShellFactory)
            (org.apache.sshd.server.auth.password PasswordAuthenticator)))
 
-;; https://keathmilligan.net/embedding-apache-mina-sshd
 (defn -main []
   (let [server (SshServer/setUpDefaultServer)]
     ;; The default "server" is far from  ready to be used --- even the
