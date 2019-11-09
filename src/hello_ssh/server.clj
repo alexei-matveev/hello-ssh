@@ -51,8 +51,12 @@
            true)))
 
       ;; With the permissible  authenticator you dont want  to offer a
-      ;; real shell:
+      ;; real shell: FIXME: the whole environment including the CWD of
+      ;; the  SSH server,  in our  test case  that of  the "lein  run"
+      ;; process,  is  taken  over  to the  forked  shell.   With  the
+      ;; interactive bash shell the tty echoes each character twice.
       (.setShellFactory
+       #_(ProcessShellFactory. ["/usr/bin/env" "-i" "/bin/bash" "--login" "-i"])
        (ProcessShellFactory. ["/bin/echo" "hello-ssh" "v0.0.0-alpha0"]))
       (.start))
     ;; Termination would also stop the server, therefore sleep ...
