@@ -1,6 +1,8 @@
 # hello-ssh
 
-Try SSH Server & Client with Clojure.  See also
+Try SSH
+[Server](https://github.com/apache/mina-sshd/blob/master/docs/server-setup.md)
+& Client with Clojure.  See also
 [Java](https://keathmilligan.net/embedding-apache-mina-sshd)
 [demo](https://github.com/keathmilligan/sshdtest).
 
