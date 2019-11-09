@@ -1,14 +1,16 @@
 # hello-ssh
 
-A Clojure library designed to ... well, that part is up to you.
+Try SSH Server & Client with Clojure.  See also
+[Java](https://keathmilligan.net/embedding-apache-mina-sshd)
+[demo](https://github.com/keathmilligan/sshdtest).
 
 ## Usage
 
-FIXME
+    lein run
 
 ## License
 
-Copyright © 2019 FIXME
+Copyright © 2019 Alexei Matveev <alexei.matveev@gmail.com>
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
