@@ -1,4 +1,4 @@
-(ns hello-ssh.core
+(ns hello-ssh.client
   (:require [clj-ssh.cli :as cli]
             [clj-ssh.ssh :as ssh]))
 
