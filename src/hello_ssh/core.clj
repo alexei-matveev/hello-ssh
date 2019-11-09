@@ -10,7 +10,7 @@
          :let [host (str "prefix-" x ".localhost")]]
      (cli/ssh host "id"))))
 
-(defn- many-cmds [n]
+(defn- many-commands [n]
   ;; Note that  in this case one  has to work with  functions & macros
   ;; from the clj-ssh.ssh namespace:
   (let [agent (ssh/ssh-agent {})
@@ -23,8 +23,9 @@
 (defn -main []
   ;; Your ~/.ssh/known_hosts will be full of new entries:
   (cli/default-session-options {:strict-host-key-checking :no})
-  (let [n 10]
-    ;; It takes ~5 Seconds for 10 logins here ...
+  (let [n 20]
+    ;; It takes about n * 0.5 seconds for n simple commands here:
     (time (println (many-hosts n)))
-    ;; OTOH 10 commands  the same on a single session  take 1.5s.
-    (time (println (many-cmds n)))))
+    ;; It takes about 0.5 + n * 0.1 seconds for n simple commands on a
+    ;; single session:
+    (time (println (many-commands n)))))
