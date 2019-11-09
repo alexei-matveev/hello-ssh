@@ -25,6 +25,10 @@
       ;;
       ;;    ssh-keygen -f ~/.ssh/known_hosts -R "[127.0.0.1]:2222"
       ;;
+      ;; You may want to disable strict host checking when testing:
+      ;;
+      ;;    ssh -p 2222 -o StrictHostKeyChecking=no user@127.0.0.1
+      ;;
       (.setKeyPairProvider (SimpleGeneratorHostKeyProvider.))
       ;; (.setFileSystemFactory  ...)
 
@@ -37,7 +41,14 @@
       (.setPasswordAuthenticator
        (reify
          PasswordAuthenticator
-         (authenticate [_ username password session] true)))
+         (authenticate [_ username password session]
+           ;; Username  ist   what  the  client  specified   e.g.   in
+           ;; "user@127.0.0.1". FIXME: password may leak in plain text
+           ;; here. Overall  ist is  probably not a  good idea  to use
+           ;; password auth ...
+           (println {:u username :p "censored" :s session})
+           ;; let the one in ...
+           true)))
 
       ;; With the permissible  authenticator you dont want  to offer a
       ;; real shell:
