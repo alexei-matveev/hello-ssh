@@ -26,9 +26,9 @@
       ;; The password  authenticator below  allows everyone  in.  Note
       ;; that when the host key  verification fails the SSH client may
       ;; choose to disable password authentication on suspicion of the
-      ;; man-in-the-middle.  Moreover,  Keys in ~/.ssh/authorized_keys
-      ;; will be  reloaded es needed  and accepted for  key-based auth
-      ;; too.
+      ;; man-in-the-middle.    Beware   that   the  public   keys   in
+      ;; ~user/.ssh/authorized_keys  will be  reloaded  as needed  and
+      ;; accepted for key-based auth too!
       (.setPasswordAuthenticator
        (reify
          PasswordAuthenticator
@@ -41,4 +41,7 @@
       (.start))
     ;; Termination would also stop the server, therefore sleep ...
     (println server)
-    (Thread/sleep (* 100 1000))))
+    (Thread/sleep (* 100 1000))
+    ;; This  is likely  the correct  was  to terminate  the server  at
+    ;; runtime:
+    (.stop server)))
