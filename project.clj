@@ -7,7 +7,7 @@
                  [clj-commons/clj-ssh "0.5.15"]
                  ;; Apache MINA SSHD,
                  ;; https://github.com/apache/mina-sshd
-                 [org.apache.sshd/sshd-core "2.2.0"]
+                 [org.apache.sshd/sshd-core "2.3.0"]
                  ;; SSHD Server reguires at runtime:
                  [org.slf4j/slf4j-api "1.6.2"]
                  [org.slf4j/slf4j-simple "1.6.2"]]
