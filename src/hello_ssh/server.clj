@@ -46,16 +46,20 @@
         output-stream (atom nil)
         error-stream (atom nil)
         prefix (str command ":")
-        commands-should-succeed true]
+        commands-should-succeed true
+        ;; This is how to notify the  server code that the command has
+        ;; finished:
+        exit (fn [code]
+               (.onExit ^ExitCallback @exit-callback code))]
     ;; Simulated object as a closure over state in the atoms:
     (reify
       Command
 
-      ;; Start method  ist strongly advised  to execute in  a separate
+      ;; Start method is strongly advised to do its work in a separate
       ;; thread.  This particular Command calls back with an exit code
       ;; on completion  from a future  or throws Exception  on failure
-      ;; from  the main  thread.  The  callback message  seems to  not
-      ;; appear anywhere the exception ends up in the log.
+      ;; from the main thread.  The optional callback message seems to
+      ;; not appear anywhere the exception ends up in the log.
       (start [_ channel env]
         (if commands-should-succeed
           (future
@@ -74,7 +78,7 @@
               (doto out
                 (.write "Bye!\n")
                 (.flush)))
-            (.onExit ^ExitCallback @exit-callback 42 "Some exit message ..."))
+            (exit 0))
           (throw
            (java.io.IOException. (str prefix " failed!")))))
 
