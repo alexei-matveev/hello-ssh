@@ -4,9 +4,14 @@
 ;; "AbstractCommandSupport"  [3],  sadly   for  subclassing,  not  for
 ;; composition. It may still provide some inspiration though.
 ;;
+;; FIXME: TTY is  a mess [4]. It  looks like the PTY  is not allocated
+;; for the processes starte by ProcessShellFactory on the server side,
+;; despite what "ssh -vv" appears to say.
+;;
 ;; [1] https://keathmilligan.net/embedding-apache-mina-sshd
 ;; [2] https://github.com/keathmilligan/sshdtest
 ;; [3] https://github.com/apache/mina-sshd/blob/master/sshd-core/src/main/java/org/apache/sshd/server/command/AbstractCommandSupport.java
+;; [4] https://www.linusakesson.net/programming/tty/
 ;;
 (ns hello-ssh.server
   (:require [clojure.java.io :as io])
@@ -169,21 +174,22 @@
        (reify
          PasswordAuthenticator
          (authenticate [_ username password session]
-           ;; Username  ist   what  the  client  specified   e.g.   in
+           ;; Username  is   what  the   client  specified   e.g.   in
            ;; "user@127.0.0.1". FIXME: password may leak in plain text
-           ;; here. Overall  ist is  probably not a  good idea  to use
+           ;; here.  Overall it  is probably  not a  good idea  to use
            ;; password auth ...
            (println {:u username :p "censored" :s session})
            ;; let the one in ...
            true)))
 
       ;; So called "shell requests" are handled bei "ShellFactory" for
-      ;; sessions  like   "ssh  user@hiost".   With   the  permissible
+      ;; sessions   like  "ssh   user@host".   With   the  permissible
       ;; authenticator you dont want to offer a real shell: FIXME: the
-      ;; whole environment including the CWD of the SSH server, in our
-      ;; test case  that of the "lein  run" process, is taken  over to
-      ;; the forked  shell.  With the  interactive bash shell  the tty
-      ;; echoes each character twice.
+      ;; whole environment including the UID  & CWD of the SSH server,
+      ;; in our  test case that  of the  "lein run" process,  is taken
+      ;; over to  the forked shell.   With the interactive  bash shell
+      ;; the tty  echoes each character  twice, try "ssh -T"  or "stty
+      ;; -echo" before ssh. Even if you start the server as root.
       (.setShellFactory
        (if false
          (ProcessShellFactory. ["/usr/bin/env" "-i" "/bin/bash" "--login" "-i"])
