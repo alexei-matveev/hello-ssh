@@ -2,9 +2,15 @@
 
 Try SSH
 [Server](https://github.com/apache/mina-sshd/blob/master/docs/server-setup.md)
-& Client with Clojure.  See also
-[Java](https://keathmilligan.net/embedding-apache-mina-sshd)
-[demo](https://github.com/keathmilligan/sshdtest).
+with Apache [mina-sshd](https://github.com/apache/mina-sshd) &
+[JSch](http://www.jcraft.com/jsch/) SSH Client with Clojure.
+
+See also
+
+* [Java](https://keathmilligan.net/embedding-apache-mina-sshd)
+  [demo](https://github.com/keathmilligan/sshdtest)
+* [Examples](https://github.com/apache/mina-sshd/blob/master/docs/cli.md)
+  in the Apache MINA SSHD source tree.
 
 ## Usage
 
