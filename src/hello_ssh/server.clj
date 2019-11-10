@@ -8,7 +8,54 @@
   (:import (org.apache.sshd.server SshServer)
            (org.apache.sshd.server.keyprovider SimpleGeneratorHostKeyProvider)
            (org.apache.sshd.server.shell ProcessShellFactory)
-           (org.apache.sshd.server.auth.password PasswordAuthenticator)))
+           (org.apache.sshd.server.auth.password PasswordAuthenticator)
+           (org.apache.sshd.server.command Command CommandFactory)))
+
+;; A   Command  is   an  object   that  implements   two  methods   of
+;; CommandLifecylce:
+;;
+;;     void start (ChannelSession channel, Environment env) throws IOException;
+;;     void destroy (ChannelSession channel) throws Exception;
+;;
+;; Four methods of Command itself:
+;;
+;;     void setInputStream (InputStream in);
+;;     void setOutputStream (OutputStream out);
+;;     void setErrorStream (OutputStream err);
+;;     void setExitCallback (ExitCallback callback);
+
+;; This  particular function  produces  high quality  noops, doing  it
+;; quite  efficiently. Well  the  start method  should probably  write
+;; something or at least close some streams ...
+(defn- make-command []
+  (reify
+    Command
+    ;; Start method ist strongly advised to call Thread/start ...
+    (start [_ channgel env]
+      (println "noop started")
+      (throw (java.io.IOException. "noop failed to start ...")))
+    (destroy [_ channel]
+      (println "noop destroyed"))
+    (setInputStream [_ in]
+      (println "noop in=" in))
+    (setOutputStream [_ out]
+      (println "nooop out=" out))
+    (setErrorStream [_ err]
+      (println "noop err=" err))
+    ;; Callback used by the shell to notify the SSH server is has
+    ;; exited:
+    (setExitCallback [_ callback]
+      (println "exit callback=" callback))))
+
+;; Prepares CommandFactory for use  in setCommandFactory().  FWIW, the
+;; CommandFactory is declared as a FunctionalInterface:
+(defn- make-command-factory []
+  (reify
+    CommandFactory
+    ;; Command createCommand (ChannelSession channel, String command)
+    ;; throws IOException;
+    (createCommand [_ channel command]
+      (make-command))))
 
 (defn -main []
   (let [server (SshServer/setUpDefaultServer)]
@@ -50,14 +97,23 @@
            ;; let the one in ...
            true)))
 
-      ;; With the permissible  authenticator you dont want  to offer a
-      ;; real shell: FIXME: the whole environment including the CWD of
-      ;; the  SSH server,  in our  test case  that of  the "lein  run"
-      ;; process,  is  taken  over  to the  forked  shell.   With  the
-      ;; interactive bash shell the tty echoes each character twice.
+      ;; So called "shell requests" are handled bei "ShellFactory" for
+      ;; sessions  like   "ssh  user@hiost".   With   the  permissible
+      ;; authenticator you dont want to offer a real shell: FIXME: the
+      ;; whole environment including the CWD of the SSH server, in our
+      ;; test case  that of the "lein  run" process, is taken  over to
+      ;; the forked  shell.  With the  interactive bash shell  the tty
+      ;; echoes each character twice.
       (.setShellFactory
-       #_(ProcessShellFactory. ["/usr/bin/env" "-i" "/bin/bash" "--login" "-i"])
-       (ProcessShellFactory. ["/bin/echo" "hello-ssh" "v0.0.0-alpha0"]))
+       (if false
+         (ProcessShellFactory. ["/usr/bin/env" "-i" "/bin/bash" "--login" "-i"])
+         (ProcessShellFactory. ["/bin/echo" "hello-ssh v0.0.0-alpha0" "no shell access, sorry!"])))
+
+      ;; So called  "exec requests" are handled  by CommandFactory for
+      ;; sessions  like "ssh  user@host cmd".   CommandFactory can  be
+      ;; used  for  SCP  and  implementing commands  in  pure  Java  &
+      ;; Clojure:
+      (.setCommandFactory (make-command-factory))
       (.start))
     ;; Termination would also stop the server, therefore sleep ...
     (println server)
