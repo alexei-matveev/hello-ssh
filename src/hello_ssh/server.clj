@@ -33,16 +33,17 @@
 ;; Clojure style.  Well  the start method MUST call  the exit callback
 ;; supplied by  a setter,  and SHOULD probably  write something  or at
 ;; least close some streams ...
-(defn- make-command []
+(defn- make-command [command]
   ;; We need  something to store  the state  in. Gotta love  all those
   ;; setters ...
-  (let [exit-callback (atom nil)]
+  (let [exit-callback (atom nil)
+        prefix (str command ":")]
     ;; Simulated object as a closure over state in the atom:
     (reify
       Command
       ;; Start method ist strongly advised to call Thread/start ...
       (start [_ channel env]
-        (println "noop started, channel=" channel "env=" env)
+        (println prefix "channel=" channel "env=" env)
         ;; Callback  with  exit code  on  completion  or Exception  on
         ;; failure.
         (if true
@@ -50,28 +51,46 @@
           (throw
            (java.io.IOException. "noop failed to start ..."))))
       (destroy [_ channel]
-        (println "noop destroyed, channel=" channel))
+        (println prefix  "destroyed, channel=" channel))
       (setInputStream [_ in]
-        (println "noop in=" in))
+        (println prefix "in=" in))
       (setOutputStream [_ out]
-        (println "nooop out=" out))
+        (println prefix "out=" out))
       (setErrorStream [_ err]
-        (println "noop err=" err))
+        (println prefix "err=" err))
       ;; Callback used by the shell to notify the SSH server is has
       ;; exited:
       (setExitCallback [_ callback]
-        (println "exit callback=" callback)
+        (println prefix "callback=" callback)
         (reset! exit-callback callback)))))
 
-;; Prepares CommandFactory for use  in setCommandFactory().  FWIW, the
-;; CommandFactory is declared as a FunctionalInterface:
+;; Next    function    prepares     CommandFactory    for    use    in
+;; setCommandFactory().   FWIW, the  CommandFactory is  declared as  a
+;; FunctionalInterface.
+;;
+;; FIXME: Something is very wrong  about the factory interface --- the
+;; "command" argument is a single string!  Whenever you execute
+;;
+;;     ssh user@host cmd -a "x y z"
+;;
+;; the client, here ssh executable, gets a nicely separated array with
+;; string arguments:
+;;
+;;     argv = [... "cmd" "-a" "x y z"]
+;;
+;; but command factory  on the server side receives  a single unparsed
+;; string
+;;
+;;     command = "cmd -a -b x y z"
+;;
 (defn- make-command-factory []
   (reify
     CommandFactory
     ;; Command createCommand (ChannelSession channel, String command)
     ;; throws IOException;
     (createCommand [_ channel command]
-      (make-command))))
+      ;; Will we ever need channel too?
+      (make-command command))))
 
 (defn -main []
   (let [server (SshServer/setUpDefaultServer)]
