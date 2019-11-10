@@ -64,24 +64,32 @@
         (println prefix "callback=" callback)
         (reset! exit-callback callback)))))
 
+;;
 ;; Next    function    prepares     CommandFactory    for    use    in
 ;; setCommandFactory().   FWIW, the  CommandFactory is  declared as  a
 ;; FunctionalInterface.
 ;;
-;; FIXME: Something is very wrong  about the factory interface --- the
+;; Something  is very  wrong  about  the SSH  exec  protocoll ---  the
 ;; "command" argument is a single string!  Whenever you execute
 ;;
-;;     ssh user@host cmd -a "x y z"
+;;     touch "x y z"
+;;     ssh ls -l "x y z"
 ;;
-;; the client, here ssh executable, gets a nicely separated array with
-;; string arguments:
+;; the  client executable,  here the  "ssh", gets  a nicely  separated
+;; array with the file name as a single string:
 ;;
-;;     argv = [... "cmd" "-a" "x y z"]
+;;     argv = ["ssh" "ls" "-l" "x y z"]
 ;;
-;; but command factory  on the server side receives  a single unparsed
-;; string
+;; but command factory on the server side apparently receives a single
+;; unparsed string
 ;;
-;;     command = "cmd -a -b x y z"
+;;     command = "ls -l x y z"
+;;
+;; and you end with
+;;
+;;     ls: cannot access 'x': No such file or directory
+;;     ls: cannot access 'y': No such file or directory
+;;     ls: cannot access 'z': No such file or directory
 ;;
 (defn- make-command-factory []
   (reify
