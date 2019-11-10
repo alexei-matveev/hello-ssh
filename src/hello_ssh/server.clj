@@ -1,8 +1,12 @@
 ;;
-;; See blog entry [1] and the Java example [2].
+;; See the blog  entry [1] for a starter and  the correspoding minimal
+;; Java  example  [2].   The  Apache   MINA  SSHD  Project  offers  an
+;; "AbstractCommandSupport"  [3],  sadly   for  subclassing,  not  for
+;; composition. It may still provide some inspiration though.
 ;;
 ;; [1] https://keathmilligan.net/embedding-apache-mina-sshd
 ;; [2] https://github.com/keathmilligan/sshdtest
+;; [3] https://github.com/apache/mina-sshd/blob/master/sshd-core/src/main/java/org/apache/sshd/server/command/AbstractCommandSupport.java
 ;;
 (ns hello-ssh.server
   (:import (org.apache.sshd.server SshServer ExitCallback)
