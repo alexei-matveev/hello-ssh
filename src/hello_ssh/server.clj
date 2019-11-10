@@ -34,26 +34,29 @@
 ;; start/execute. Just exiting the start method does not suffice.
 ;;
 
-;; This  particular function  produces  high quality  noops, doing  it
-;; Clojure style.  Well  the start method MUST call  the exit callback
-;; supplied by  a setter,  and SHOULD probably  write something  or at
-;; least close some streams ...
+;; This  particular function  produces high  quality but  useless test
+;; Command, doing  it functional Clojure  style.  At the  very minimum
+;; the start method MUST call the  exit callback supplied by a setter,
+;; and SHOULD probably do something with the IO streams.
 (defn- make-command [command]
   ;; We need  something to store the  state in.  Throw in  a few atoms
   ;; and bindings. Gotta love all those setters ...
   (let [exit-callback (atom nil)
+        input-stream (atom nil)
         output-stream (atom nil)
+        error-stream (atom nil)
         prefix (str command ":")
         commands-should-succeed true]
-    ;; Simulated object as a closure over state in the atom:
+    ;; Simulated object as a closure over state in the atoms:
     (reify
       Command
-      ;; Start method ist strongly advised to call Thread/start ...
+
+      ;; Start method  ist strongly advised  to execute in  a separate
+      ;; thread.  This particular Command calls back with an exit code
+      ;; on completion  from a future  or throws Exception  on failure
+      ;; from  the main  thread.  The  callback message  seems to  not
+      ;; appear anywhere the exception ends up in the log.
       (start [_ channel env]
-        (println prefix "channel=" channel "env=" env)
-        ;; Call back with  an exit code on completion  from a separate
-        ;; thread or Exception on  failure. The callback message seems
-        ;; to not appear anywhere ...
         (if commands-should-succeed
           (future
             (let [w (io/writer @output-stream)]
@@ -64,20 +67,24 @@
                 (.flush)))
             (.onExit ^ExitCallback @exit-callback 42 "Some exit message ..."))
           (throw
-           (java.io.IOException. "noop failed to start ..."))))
+           (java.io.IOException. (str prefix " failed!")))))
+
+      ;; Maybe kill the thread it it hangs!
       (destroy [_ channel]
-        (println prefix  "destroyed, channel=" channel))
+        nil)
+
       (setInputStream [_ in]
-        (println prefix "in=" in))
+        (reset! input-stream in))
+
       (setOutputStream [_ out]
-        (println prefix "out=" out)
         (reset! output-stream out))
+
       (setErrorStream [_ err]
-        (println prefix "err=" err))
+        (reset! error-stream err))
+
       ;; Callback used by the shell to notify the SSH server is has
       ;; exited:
       (setExitCallback [_ callback]
-        (println prefix "callback=" callback)
         (reset! exit-callback callback)))))
 
 ;;
