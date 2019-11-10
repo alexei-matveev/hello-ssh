@@ -59,11 +59,21 @@
       (start [_ channel env]
         (if commands-should-succeed
           (future
-            (doto (io/writer @output-stream)
-              (.write (str "Hello from " command))
-              (.write "\nBye!\n")
-              ;; You need to flush to avoid loosing output:
-              (.flush))
+            (let [inp (io/reader @input-stream)
+                  out (io/writer @output-stream)]
+              ;; Header:
+              (doto out
+                (.write (str "Hello from " command "\n"))
+                (.write "Here is a copy of your input:\n")
+                (.flush))
+
+              ;; Does not close either stream, buffered:
+              (io/copy inp out)
+
+              ;; Footer. You need to flush to avoid loosing output:
+              (doto out
+                (.write "Bye!\n")
+                (.flush)))
             (.onExit ^ExitCallback @exit-callback 42 "Some exit message ..."))
           (throw
            (java.io.IOException. (str prefix " failed!")))))
