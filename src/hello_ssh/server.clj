@@ -14,7 +14,8 @@
            (org.apache.sshd.server.keyprovider SimpleGeneratorHostKeyProvider)
            (org.apache.sshd.server.shell ProcessShellFactory)
            (org.apache.sshd.server.auth.password PasswordAuthenticator)
-           (org.apache.sshd.server.command Command CommandFactory)))
+           (org.apache.sshd.server.command Command CommandFactory)
+           (java.io IOException)))
 
 ;; A   Command  is   an  object   that  implements   two  methods   of
 ;; CommandLifecylce:
@@ -80,7 +81,7 @@
                 (.flush)))
             (exit 0))
           (throw
-           (java.io.IOException. (str prefix " failed!")))))
+           (IOException. (str prefix " failed!")))))
 
       ;; Maybe kill the thread if it hangs!
       (destroy [_ channel]
