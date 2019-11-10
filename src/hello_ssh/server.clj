@@ -9,6 +9,7 @@
 ;; [3] https://github.com/apache/mina-sshd/blob/master/sshd-core/src/main/java/org/apache/sshd/server/command/AbstractCommandSupport.java
 ;;
 (ns hello-ssh.server
+  (:require [clojure.java.io :as io])
   (:import (org.apache.sshd.server SshServer ExitCallback)
            (org.apache.sshd.server.keyprovider SimpleGeneratorHostKeyProvider)
            (org.apache.sshd.server.shell ProcessShellFactory)
@@ -38,20 +39,30 @@
 ;; supplied by  a setter,  and SHOULD probably  write something  or at
 ;; least close some streams ...
 (defn- make-command [command]
-  ;; We need  something to store  the state  in. Gotta love  all those
-  ;; setters ...
+  ;; We need  something to store the  state in.  Throw in  a few atoms
+  ;; and bindings. Gotta love all those setters ...
   (let [exit-callback (atom nil)
-        prefix (str command ":")]
+        output-stream (atom nil)
+        prefix (str command ":")
+        commands-should-succeed true]
     ;; Simulated object as a closure over state in the atom:
     (reify
       Command
       ;; Start method ist strongly advised to call Thread/start ...
       (start [_ channel env]
         (println prefix "channel=" channel "env=" env)
-        ;; Callback  with  exit code  on  completion  or Exception  on
-        ;; failure.
-        (if true
-          (.onExit ^ExitCallback @exit-callback 42)
+        ;; Call back with  an exit code on completion  from a separate
+        ;; thread or Exception on  failure. The callback message seems
+        ;; to not appear anywhere ...
+        (if commands-should-succeed
+          (future
+            (let [w (io/writer @output-stream)]
+              (doto w
+                (.write (str "Hello from " command))
+                (.write "\nBye!\n")
+                ;; You need to flush to avoid loosing output:
+                (.flush)))
+            (.onExit ^ExitCallback @exit-callback 42 "Some exit message ..."))
           (throw
            (java.io.IOException. "noop failed to start ..."))))
       (destroy [_ channel]
@@ -59,7 +70,8 @@
       (setInputStream [_ in]
         (println prefix "in=" in))
       (setOutputStream [_ out]
-        (println prefix "out=" out))
+        (println prefix "out=" out)
+        (reset! output-stream out))
       (setErrorStream [_ err]
         (println prefix "err=" err))
       ;; Callback used by the shell to notify the SSH server is has
