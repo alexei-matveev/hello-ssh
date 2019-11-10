@@ -59,17 +59,16 @@
       (start [_ channel env]
         (if commands-should-succeed
           (future
-            (let [w (io/writer @output-stream)]
-              (doto w
-                (.write (str "Hello from " command))
-                (.write "\nBye!\n")
-                ;; You need to flush to avoid loosing output:
-                (.flush)))
+            (doto (io/writer @output-stream)
+              (.write (str "Hello from " command))
+              (.write "\nBye!\n")
+              ;; You need to flush to avoid loosing output:
+              (.flush))
             (.onExit ^ExitCallback @exit-callback 42 "Some exit message ..."))
           (throw
            (java.io.IOException. (str prefix " failed!")))))
 
-      ;; Maybe kill the thread it it hangs!
+      ;; Maybe kill the thread if it hangs!
       (destroy [_ channel]
         nil)
 
