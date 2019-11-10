@@ -41,8 +41,8 @@
     (reify
       Command
       ;; Start method ist strongly advised to call Thread/start ...
-      (start [_ channgel env]
-        (println "noop started")
+      (start [_ channel env]
+        (println "noop started, channel=" channel "env=" env)
         ;; Callback  with  exit code  on  completion  or Exception  on
         ;; failure.
         (if true
@@ -50,7 +50,7 @@
           (throw
            (java.io.IOException. "noop failed to start ..."))))
       (destroy [_ channel]
-        (println "noop destroyed"))
+        (println "noop destroyed, channel=" channel))
       (setInputStream [_ in]
         (println "noop in=" in))
       (setOutputStream [_ out]
