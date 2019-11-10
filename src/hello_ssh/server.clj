@@ -5,7 +5,7 @@
 ;; [2] https://github.com/keathmilligan/sshdtest
 ;;
 (ns hello-ssh.server
-  (:import (org.apache.sshd.server SshServer)
+  (:import (org.apache.sshd.server SshServer ExitCallback)
            (org.apache.sshd.server.keyprovider SimpleGeneratorHostKeyProvider)
            (org.apache.sshd.server.shell ProcessShellFactory)
            (org.apache.sshd.server.auth.password PasswordAuthenticator)
@@ -17,35 +17,51 @@
 ;;     void start (ChannelSession channel, Environment env) throws IOException;
 ;;     void destroy (ChannelSession channel) throws Exception;
 ;;
-;; Four methods of Command itself:
+;; and four methods of the Command interface itself:
 ;;
 ;;     void setInputStream (InputStream in);
 ;;     void setOutputStream (OutputStream out);
 ;;     void setErrorStream (OutputStream err);
 ;;     void setExitCallback (ExitCallback callback);
+;;
+;; The command  must call the  onExit method of the  ExitCallback upon
+;; completion    or   throw    an    IOException    on   failure    to
+;; start/execute. Just exiting the start method does not suffice.
+;;
 
 ;; This  particular function  produces  high quality  noops, doing  it
-;; quite  efficiently. Well  the  start method  should probably  write
-;; something or at least close some streams ...
+;; Clojure style.  Well  the start method MUST call  the exit callback
+;; supplied by  a setter,  and SHOULD probably  write something  or at
+;; least close some streams ...
 (defn- make-command []
-  (reify
-    Command
-    ;; Start method ist strongly advised to call Thread/start ...
-    (start [_ channgel env]
-      (println "noop started")
-      (throw (java.io.IOException. "noop failed to start ...")))
-    (destroy [_ channel]
-      (println "noop destroyed"))
-    (setInputStream [_ in]
-      (println "noop in=" in))
-    (setOutputStream [_ out]
-      (println "nooop out=" out))
-    (setErrorStream [_ err]
-      (println "noop err=" err))
-    ;; Callback used by the shell to notify the SSH server is has
-    ;; exited:
-    (setExitCallback [_ callback]
-      (println "exit callback=" callback))))
+  ;; We need  something to store  the state  in. Gotta love  all those
+  ;; setters ...
+  (let [exit-callback (atom nil)]
+    ;; Simulated object as a closure over state in the atom:
+    (reify
+      Command
+      ;; Start method ist strongly advised to call Thread/start ...
+      (start [_ channgel env]
+        (println "noop started")
+        ;; Callback  with  exit code  on  completion  or Exception  on
+        ;; failure.
+        (if true
+          (.onExit ^ExitCallback @exit-callback 42)
+          (throw
+           (java.io.IOException. "noop failed to start ..."))))
+      (destroy [_ channel]
+        (println "noop destroyed"))
+      (setInputStream [_ in]
+        (println "noop in=" in))
+      (setOutputStream [_ out]
+        (println "nooop out=" out))
+      (setErrorStream [_ err]
+        (println "noop err=" err))
+      ;; Callback used by the shell to notify the SSH server is has
+      ;; exited:
+      (setExitCallback [_ callback]
+        (println "exit callback=" callback)
+        (reset! exit-callback callback)))))
 
 ;; Prepares CommandFactory for use  in setCommandFactory().  FWIW, the
 ;; CommandFactory is declared as a FunctionalInterface:
