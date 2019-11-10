@@ -20,7 +20,8 @@
            (org.apache.sshd.server.shell ProcessShellFactory)
            (org.apache.sshd.server.auth.password PasswordAuthenticator)
            (org.apache.sshd.server.command Command CommandFactory)
-           (java.io IOException)))
+           (java.io IOException))
+  (:gen-class))
 
 ;; A   Command  is   an  object   that  implements   two  methods   of
 ;; CommandLifecylce:
@@ -88,9 +89,8 @@
           (throw
            (IOException. (str prefix " failed!")))))
 
-      ;; Maybe kill the thread if it hangs!
-      (destroy [_ channel]
-        nil)
+      ;; Does nothing. Maybe kill the future if it hangs!
+      (destroy [_ channel])
 
       (setInputStream [_ in]
         (reset! input-stream in))
@@ -193,7 +193,7 @@
       (.setShellFactory
        (if false
          (ProcessShellFactory. ["/usr/bin/env" "-i" "/bin/bash" "--login" "-i"])
-         (ProcessShellFactory. ["/bin/echo" "hello-ssh v0.0.0-alpha0" "no shell access, sorry!"])))
+         (ProcessShellFactory. ["/bin/echo" "hello-ssh v0.0, no shell access!"])))
 
       ;; So called  "exec requests" are handled  by CommandFactory for
       ;; sessions  like "ssh  user@host cmd".   CommandFactory can  be
@@ -203,7 +203,7 @@
       (.start))
     ;; Termination would also stop the server, therefore sleep ...
     (println server)
-    (Thread/sleep (* 100 1000))
+    (Thread/sleep Long/MAX_VALUE)
     ;; This  is likely  the correct  was  to terminate  the server  at
     ;; runtime:
     (.stop server)))
