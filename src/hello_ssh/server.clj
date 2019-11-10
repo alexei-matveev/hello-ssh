@@ -73,15 +73,15 @@
 ;; "command" argument is a single string!  Whenever you execute
 ;;
 ;;     touch "x y z"
-;;     ssh ls -l "x y z"
+;;     ssh localhost ls -l "x y z"
 ;;
-;; the  client executable,  here the  "ssh", gets  a nicely  separated
-;; array with the file name as a single string:
+;; the client  executable, here  the "ssh",  gets a  nicely structured
+;; string array with the file name as a single string:
 ;;
-;;     argv = ["ssh" "ls" "-l" "x y z"]
+;;     argv = ["ssh" "localhost" "ls" "-l" "x y z"]
 ;;
-;; but command factory on the server side apparently receives a single
-;; unparsed string
+;; but the  command factory on  the server side apparently  receives a
+;; single unparsed string
 ;;
 ;;     command = "ls -l x y z"
 ;;
